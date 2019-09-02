@@ -1,9 +1,18 @@
+import hashlib
 from .import forms
 from django.shortcuts import render
 
 # Create your views here.
 from django.shortcuts import redirect
 from. import models
+# 引入哈希算法
+
+
+def hash_code(s, salt='mysite'):
+    h = hashlib.sha256()
+    s += salt
+    h.update(s.encode())  # update方法只接收bytes类型
+    return h.hexdigest()
 
 
 def index(request):
@@ -27,7 +36,7 @@ def login(request):
             except:
                 message = '用户不存在!'
                 return render(request, 'login/login.html', locals())
-            if user.password == password:
+            if user.password ==hash_code(password):
                 # 往session字典内写入用户状态和数据
                 request.session['is_login'] = True
                 request.session['user_id'] = user.id
@@ -67,10 +76,10 @@ def register(request):
                 if same_email_user:
                     message = '该邮箱已经被注册了!'
                     return render(request, 'login/register.html', locals())
-                
+
                 new_user = models.User()
                 new_user.name = username
-                new_user.password = password1
+                new_user.password = hash_code(password1)
                 new_user.email = email
                 new_user.sex = sex
                 new_user.save()
